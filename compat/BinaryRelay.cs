@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Text;
 using Microsoft.Win32.SafeHandles;
 
 public static class ChatGptSshBinaryRelay {
@@ -28,7 +29,15 @@ public static class ChatGptSshBinaryRelay {
                 UseShellExecute = false, CreateNoWindow = true,
                 RedirectStandardInput = true, RedirectStandardOutput = true
             };
-            process.Start();
+            // .NET Framework creates a StreamWriter for redirected child stdin.
+            // Its AutoFlush can emit a BOM before we ever touch BaseStream when
+            // Console.InputEncoding has a preamble. Force a BOM-less writer at
+            // process creation, then restore this process's encoding setting.
+            Encoding originalEncoding = Console.InputEncoding;
+            try {
+                Console.InputEncoding = new UTF8Encoding(false);
+                process.Start();
+            } finally { Console.InputEncoding = originalEncoding; }
             // A raw pipe handle avoided the ConsoleStream stall in the incident.
             // This assumes redirected SSH stdin, not an interactive console.
             using (Stream input = new FileStream(
