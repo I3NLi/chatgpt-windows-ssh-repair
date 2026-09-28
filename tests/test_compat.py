@@ -25,6 +25,8 @@ class CompatibilityTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.compat = Path(self.temp.name) / '\u6d4b\u8bd5'
         shutil.copytree(ROOT / 'compat', self.compat)
+        # GitHub Windows TEMP may use an 8.3 alias; PowerShell expands it.
+        self.compat = self.compat.resolve()
 
     def rewrite(self, text):
         value = encoded(text)
@@ -61,7 +63,7 @@ class CompatibilityTests(unittest.TestCase):
             self.assertEqual(self.run_bash(command, ssh=True), 'OK')
 
     def test_binary_frames_roundtrip_and_eof(self):
-        env = dict(os.environ, RELAY_TEST_NODE=shutil.which('node'))
+        env = dict(os.environ, RELAY_TEST_NODE=shutil.which('node'), RELAY_TEST_BOM='1')
         process = subprocess.Popen([PS, '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
             '-File', str(ROOT / 'tests/run-relay.ps1')], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, env=env)

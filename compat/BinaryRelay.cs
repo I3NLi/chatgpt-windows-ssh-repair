@@ -32,8 +32,10 @@ public static class ChatGptSshBinaryRelay {
             // A raw pipe handle avoided the ConsoleStream stall in the incident.
             // This assumes redirected SSH stdin, not an interactive console.
             using (Stream input = new FileStream(
-                new SafeFileHandle(GetStdHandle(-10), false), FileAccess.Read, 4096, false)) {
-                Stream output = Console.OpenStandardOutput();
+                new SafeFileHandle(GetStdHandle(-10), false), FileAccess.Read, 4096, false))
+            using (Stream output = new FileStream(
+                new SafeFileHandle(GetStdHandle(-11), false), FileAccess.Write, 4096, false)) {
+                // Raw stdout also avoids a Console encoding preamble (BOM).
                 Task upstream = Task.Run(() => {
                     try { Pump(input, process.StandardInput.BaseStream); }
                     catch (IOException) { }

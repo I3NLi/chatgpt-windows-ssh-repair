@@ -29,6 +29,8 @@ Run `npm test` on Windows. Tests never need SSH keys, account tokens or access t
 4. Ordinary and matched encoded scripts execute correctly through Git Bash.
 5. Multiple binary frames round-trip without newline dependence, including NUL, high bytes and a frame larger than the relay buffer; stdin EOF shuts down the relay.
 
+The first GitHub Windows run exposed a UTF-8 BOM on stdout and an 8.3 temporary-path alias in a test expectation. The relay now uses raw handles for both stdin and stdout; the binary test explicitly enables a BOM-producing console encoding and still requires exact bytes. Path expectations resolve the temporary directory before comparison.
+
 GitHub Actions runs these checks on Windows. See the workflow run for the actual result rather than treating the presence of a workflow file as evidence of a pass.
 
 ### Local release preparation — 2026-09-29
